@@ -10,14 +10,18 @@ source "${plugin_dir}/lib/utils.bash"
 
 mkdir -p "$ASDF_DOWNLOAD_PATH"
 
-# TODO: Adapt this to proper extension and adapt extracting strategy.
-release_file="$ASDF_DOWNLOAD_PATH/$TOOL_NAME-$ASDF_INSTALL_VERSION.tar.gz"
+case "$OSTYPE" in
+    darwin*) platform="darwin" ;;
+    linux*) platform="linux" ;;
+    *) fail "Unsupported platform" ;;
+esac
 
-# Download tar.gz file to the download directory
-download_release "$ASDF_INSTALL_VERSION" "$release_file"
+case "$(uname -m)" in
+    aarch64* | arm64) architecture="arm64" ;;
+    x86_64*) architecture="x64" ;;
+    *) fail "Unsupported architecture" ;;
+esac
 
-#  Extract contents of tar.gz file into the download directory
-tar -xzf "$release_file" -C "$ASDF_DOWNLOAD_PATH" --strip-components=1 || fail "Could not extract $release_file"
+release_file="$ASDF_DOWNLOAD_PATH/$TOOL_NAME-$ASDF_INSTALL_VERSION"
 
-# Remove the tar.gz file since we don't need to keep it
-rm "$release_file"
+download_release "$ASDF_INSTALL_VERSION" "$release_file" "$architecture" "$platform"
