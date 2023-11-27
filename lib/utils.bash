@@ -37,10 +37,10 @@ download_release() {
 	local version filename url
 	version="$1"
 	filename="$2"
-	architecture="$3"
-	platform="$4"
+	platform="$3"
+	architecture="$4"
 
-	url="$GH_REPO/releases/download/${version}/launchpad-${architecture}-${platform}"
+	url="$GH_REPO/releases/download/${version}/launchpad-${platform}-${architecture}"
 
 	echo "* Downloading $TOOL_NAME release $version..."
 	curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
