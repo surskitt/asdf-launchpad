@@ -22,6 +22,6 @@ case "$(uname -m)" in
     *) fail "Unsupported architecture" ;;
 esac
 
-release_file="$ASDF_DOWNLOAD_PATH/$TOOL_NAME-$ASDF_INSTALL_VERSION"
+release_file="$ASDF_DOWNLOAD_PATH/$TOOL_NAME"
 
 download_release "$ASDF_INSTALL_VERSION" "$release_file" "$platform" "$architecture"
