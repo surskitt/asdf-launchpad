@@ -94,7 +94,7 @@ get_platform() {
 	*) fail "Platform ${platform} unsupported" ;;
 	esac
 
-	echo "${platform,,}"
+	echo "${platform}" | tr '[:upper:]' '[:lower:]'
 }
 
 get_platform_old() {
