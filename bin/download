@@ -10,8 +10,6 @@ source "${plugin_dir}/lib/utils.bash"
 
 url="$(get_download_url "${ASDF_INSTALL_VERSION}")"
 
-status="$(curl --write-out "%{http_code}" -Lo "${ASDF_DOWNLOAD_PATH}/launchpad" "${url}")"
-
-if [[ "${status}" -eq 404 ]] ; then
+if ! curl -L -sf "${url}" -o "${ASDF_DOWNLOAD_PATH}/launchpad" ; then
 	fail "Download ${url} failed"
 fi
