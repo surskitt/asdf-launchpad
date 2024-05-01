@@ -12,13 +12,6 @@ fail() {
 	exit 1
 }
 
-# curl_opts=(-fsSL)
-
-# NOTE: You might want to remove this if launchpad is not hosted on GitHub releases.
-# if [ -n "${GITHUB_API_TOKEN:-}" ]; then
-# 	curl_opts=("${curl_opts[@]}" -H "Authorization: token $GITHUB_API_TOKEN")
-# fi
-
 sort_versions() {
 	sed 'h; s/[+-]/./g; s/.p\([[:digit:]]\)/.z\1/; s/$/.z/; G; s/\n/ /' |
 		LC_ALL=C sort -t. -k 1,1 -k 2,2n -k 3,3n -k 4,4n -k 5,5n | awk '{print $2}'
@@ -34,51 +27,30 @@ list_all_versions() {
 	list_github_tags
 }
 
-# download_release() {
-# 	local version filename url
-# 	version="$1"
-# 	filename="$2"
-#
-# 	# TODO: Adapt the release URL convention for launchpad
-# 	url="$GH_REPO/archive/v${version}.tar.gz"
-#
-# 	echo "* Downloading $TOOL_NAME release $version..."
-# 	curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
-# }
+# launchpad releases randomly changed their urls from 1.5.6 onwards
+check_old_version() {
+	version="${1}"
 
-# install_version() {
-# 	local install_type="$1"
-# 	local version="$2"
-# 	local install_path="${3%/bin}/bin"
-#
-# 	if [ "$install_type" != "version" ]; then
-# 		fail "asdf-$TOOL_NAME supports release installs only"
-# 	fi
-#
-# 	(
-# 		mkdir -p "$install_path"
-# 		cp -r "$ASDF_DOWNLOAD_PATH"/* "$install_path"
-#
-# 		# TODO: Assert launchpad executable exists.
-# 		local tool_cmd
-# 		tool_cmd="$(echo "$TOOL_TEST" | cut -d' ' -f1)"
-# 		test -x "$install_path/$tool_cmd" || fail "Expected $install_path/$tool_cmd to be executable."
-#
-# 		echo "$TOOL_NAME $version installation was successful!"
-# 	) || (
-# 		rm -rf "$install_path"
-# 		fail "An error occurred while installing $TOOL_NAME $version."
-# 	)
-# }
+	major="$(echo "${version}" | cut -d '.' -f 1)"
+	minor="$(echo "${version}" | cut -d '.' -f 2)"
+	patch="$(echo "${version}" | cut -d '.' -f 3)"
 
-get_platform() {
-	platform="$(uname -s)"
+	if [[ "${major}" -lt 1 ]] ; then
+		return 0
+	fi
 
-	case "${platform}" in
-		Darwin|FreeBSD|Linux|Windows) ;;
-		*) fail "Platform ${platform} unsupported" ;;
-	esac
+	if [[ "${minor}" -lt 5 ]] ; then
+		return 0
+	fi
 
+	if [[ "${patch}" -lt 6 ]] ; then
+		return 0
+	fi
+
+	return 1
+}
+
+get_arch() {
 	arch="$(uname -m)"
 
 	case "${arch}" in
@@ -93,17 +65,64 @@ get_platform() {
 			;;
 	esac
 
-	echo "${platform,,}_${arch}"
+	echo "${arch}"
+}
+
+get_arch_old() {
+	arch="$(uname -m)"
+
+	case "${arch}" in
+		x86_64)
+			arch="x64"
+			;;
+		arm64)
+			arch="arm64"
+			;;
+		*)
+			fail "Arch ${arch} unsupported"
+			;;
+	esac
+
+	echo "${arch}"
+}
+
+get_platform() {
+	platform="$(uname -s)"
+
+	case "${platform}" in
+		Darwin|FreeBSD|Linux|Windows) ;;
+		*) fail "Platform ${platform} unsupported" ;;
+	esac
+
+	echo "${platform,,}"
+}
+
+get_platform_old() {
+	platform="$(get_platform)"
+
+	if [[ "${platform}" == "windows" ]] ; then
+		platform="win"
+	fi
+
+	echo "${platform}"
 }
 
 get_download_url() {
 	version="${1}"
 
-	platform="$(get_platform)"
+	if check_old_version "${version}" ; then
+		platform="$(get_platform_old)"
+		arch="$(get_arch_old)"
 
-	url="https://get.mirantis.com/launchpad/v${version}/launchpad_${platform}_${version}"
+		url="https://github.com/Mirantis/launchpad/releases/download/v${version}/launchpad-${platform}-${arch}"
+	else
+		platform="$(get_platform)"
+		arch="$(get_arch)"
 
-	if [[ "${platform}" = "windows"* ]] ; then
+		url="https://get.mirantis.com/launchpad/v${version}/launchpad_${platform}_${arch}_${version}"
+	fi
+
+	if [[ "${url}" = *win* ]] ; then
 		url="${url}.exe"
 	fi
 
