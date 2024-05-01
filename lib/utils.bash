@@ -122,7 +122,7 @@ get_download_url() {
 		url="https://get.mirantis.com/launchpad/v${version}/launchpad_${platform}_${arch}_${version}"
 	fi
 
-	if [[ "${url}" = *win* ]]; then
+	if [[ "${platform}" = win* ]]; then
 		url="${url}.exe"
 	fi
 
