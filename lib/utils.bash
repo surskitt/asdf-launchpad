@@ -27,82 +27,75 @@ list_all_versions() {
 	list_github_tags
 }
 
-# launchpad releases randomly changed their urls from 1.5.6 onwards
-check_old_version() {
+get_dir_version() {
 	version="${1}"
 
-	major="$(echo "${version}" | cut -d '.' -f 1)"
-	minor="$(echo "${version}" | cut -d '.' -f 2)"
-	patch="$(echo "${version}" | cut -d '.' -f 3)"
-
-	if [[ "${major}" -lt 1 ]]; then
-		return 0
-	fi
-
-	if [[ "${minor}" -lt 5 ]]; then
-		return 0
-	fi
-
-	if [[ "${patch}" -lt 6 ]]; then
-		return 0
-	fi
-
-	return 1
+	case "${version}" in
+		0.*|1.[01234].*|1.5.[012])
+			echo "${version}"
+			;;
+		*)
+			echo "v${version}"
+			;;
+	esac
 }
 
 get_arch() {
-	arch="$(uname -m)"
+	version="${1}"
 
-	case "${arch}" in
-	x86_64)
-		arch="amd64"
-		;;
-	arm64)
-		arch="arm64"
-		;;
-	*)
-		fail "Arch ${arch} unsupported"
-		;;
-	esac
+	ua="$(uname -m)"
 
-	echo "${arch}"
-}
-
-get_arch_old() {
-	arch="$(uname -m)"
-
-	case "${arch}" in
-	x86_64)
-		arch="x64"
-		;;
-	arm64)
-		arch="arm64"
-		;;
-	*)
-		fail "Arch ${arch} unsupported"
-		;;
+	case "${ua}" in
+		x86_64)
+			case "${version}" in
+				0.*|1.[01234].*|1.5.[012345])
+					arch="x64"
+					;;
+				*)
+					arch="amd64"
+					;;
+			esac
+			;;
+		arm64)
+			arch="arm64"
+			;;
+		*)
+			fail "Arch ${arch} unsupported"
+			;;
 	esac
 
 	echo "${arch}"
 }
 
 get_platform() {
-	platform="$(uname -s)"
+	version="${1}"
 
-	case "${platform}" in
-	Darwin | FreeBSD | Linux | Windows) ;;
-	*) fail "Platform ${platform} unsupported" ;;
+	up="$(uname -s)"
+
+	case "${up}" in
+		Linux)
+			platform="linux"
+			;;
+		Darwin)
+			platform="darwin"
+			;;
+		Windows)
+			case "${version}" in
+				0.*|1.[01234].*|1.5.[012345])
+					platform="win"
+					;;
+				*)
+					platform="windows"
+					;;
+			esac
+			;;
+		FreeBSD)
+			platform="freebsd"
+			;;
+		*)
+			fail "Platform ${platform} unsupported"
+			;;
 	esac
-
-	echo "${platform}" | tr '[:upper:]' '[:lower:]'
-}
-
-get_platform_old() {
-	platform="$(get_platform)"
-
-	if [[ "${platform}" == "windows" ]]; then
-		platform="win"
-	fi
 
 	echo "${platform}"
 }
@@ -110,21 +103,16 @@ get_platform_old() {
 get_download_url() {
 	version="${1}"
 
-	if check_old_version "${version}"; then
-		platform="$(get_platform_old)"
-		arch="$(get_arch_old)"
+	dir_version="$(get_dir_version "${version}")"
+	arch="$(get_arch "${version}")"
+	platform="$(get_platform "${version}")"
 
-		url="https://github.com/Mirantis/launchpad/releases/download/v${version}/launchpad-${platform}-${arch}"
-	else
-		platform="$(get_platform)"
-		arch="$(get_arch)"
-
-		url="https://get.mirantis.com/launchpad/v${version}/launchpad_${platform}_${arch}_${version}"
-	fi
-
-	if [[ "${platform}" = win* ]]; then
-		url="${url}.exe"
-	fi
-
-	echo "${url}"
+	case "${version}" in
+		0.*|1.[01234].*|1.5.[012345])
+			echo "https://github.com/Mirantis/launchpad/releases/download/${dir_version}/launchpad-${platform}-${arch}"
+			;;
+		*)
+			echo "https://github.com/Mirantis/launchpad/releases/download/${dir_version}/launchpad_${platform}_${arch}_${version}"
+			;;
+	esac
 }
