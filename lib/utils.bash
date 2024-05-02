@@ -31,12 +31,12 @@ get_dir_version() {
 	version="${1}"
 
 	case "${version}" in
-		0.*|1.[01234].*|1.5.[012])
-			echo "${version}"
-			;;
-		*)
-			echo "v${version}"
-			;;
+	0.* | 1.[01234].* | 1.5.[012])
+		echo "${version}"
+		;;
+	*)
+		echo "v${version}"
+		;;
 	esac
 }
 
@@ -46,22 +46,22 @@ get_arch() {
 	ua="$(uname -m)"
 
 	case "${ua}" in
-		x86_64)
-			case "${version}" in
-				0.*|1.[01234].*|1.5.[012345])
-					arch="x64"
-					;;
-				*)
-					arch="amd64"
-					;;
-			esac
-			;;
-		arm64)
-			arch="arm64"
+	x86_64)
+		case "${version}" in
+		0.* | 1.[01234].* | 1.5.[012345])
+			arch="x64"
 			;;
 		*)
-			fail "Arch ${arch} unsupported"
+			arch="amd64"
 			;;
+		esac
+		;;
+	arm64)
+		arch="arm64"
+		;;
+	*)
+		fail "Arch ${arch} unsupported"
+		;;
 	esac
 
 	echo "${arch}"
@@ -73,28 +73,28 @@ get_platform() {
 	up="$(uname -s)"
 
 	case "${up}" in
-		Linux)
-			platform="linux"
-			;;
-		Darwin)
-			platform="darwin"
-			;;
-		Windows)
-			case "${version}" in
-				0.*|1.[01234].*|1.5.[012345])
-					platform="win"
-					;;
-				*)
-					platform="windows"
-					;;
-			esac
-			;;
-		FreeBSD)
-			platform="freebsd"
+	Linux)
+		platform="linux"
+		;;
+	Darwin)
+		platform="darwin"
+		;;
+	Windows)
+		case "${version}" in
+		0.* | 1.[01234].* | 1.5.[012345])
+			platform="win"
 			;;
 		*)
-			fail "Platform ${platform} unsupported"
+			platform="windows"
 			;;
+		esac
+		;;
+	FreeBSD)
+		platform="freebsd"
+		;;
+	*)
+		fail "Platform ${platform} unsupported"
+		;;
 	esac
 
 	echo "${platform}"
@@ -108,11 +108,11 @@ get_download_url() {
 	platform="$(get_platform "${version}")"
 
 	case "${version}" in
-		0.*|1.[01234].*|1.5.[012345])
-			echo "https://github.com/Mirantis/launchpad/releases/download/${dir_version}/launchpad-${platform}-${arch}"
-			;;
-		*)
-			echo "https://github.com/Mirantis/launchpad/releases/download/${dir_version}/launchpad_${platform}_${arch}_${version}"
-			;;
+	0.* | 1.[01234].* | 1.5.[012345])
+		echo "https://github.com/Mirantis/launchpad/releases/download/${dir_version}/launchpad-${platform}-${arch}"
+		;;
+	*)
+		echo "https://github.com/Mirantis/launchpad/releases/download/${dir_version}/launchpad_${platform}_${arch}_${version}"
+		;;
 	esac
 }
